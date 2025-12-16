@@ -1,0 +1,386 @@
+/* Change sidebar background colors */
+aside#sidebar {
+    background-color: #3D95A0 !important;
+}
+
+/* Change border colors */
+aside#sidebar .border-gray-800 {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Change hover states */
+aside#sidebar a:hover {
+    background-color: #2d7179 !important;
+}
+
+/* Active/selected menu item */
+aside#sidebar a.bg-gray-800 {
+    background-color: #2d7179 !important;
+}
+
+/* Toggle button background */
+#sidebarToggle {
+    background-color: #2d7179 !important;
+}
+
+#sidebarToggle:hover {
+    background-color: #235961 !important;
+}
+
+/* Section headings */
+aside#sidebar .text-gray-500 {
+    color: #E8F5F6 !important;
+    opacity: 0.8;
+}
+
+/* Text colors - make sure they're visible on teal background */
+aside#sidebar .text-gray-400 {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+aside#sidebar .text-gray-200 {
+    color: #ffffff !important;
+}
+
+
+
+
+/* Admin dashboard page Css */
+
+
+.bg-blue-100 {
+    background-color: rgba(61, 149, 160, 0.1) !important;
+}
+.text-blue-600 {
+    color: #3D95A0 !important;
+}
+.text-blue-800 {
+    color: #2d7179 !important;
+}
+.hover\:text-blue-800:hover {
+    color: #2d7179 !important;
+}
+
+/* Total Drivers Card */
+.bg-green-100 {
+    background-color: rgba(78, 173, 181, 0.1) !important;
+}
+.text-green-600 {
+    color: #4EADB5 !important;
+}
+.text-green-800 {
+    color: #3D95A0 !important;
+}
+
+/* Active Jobs Card */
+.bg-yellow-100 {
+    background-color: rgba(61, 149, 160, 0.15) !important;
+}
+.text-yellow-600 {
+    color: #2d7179 !important;
+}
+.text-yellow-800 {
+    color: #235961 !important;
+}
+
+/* Total Revenue Card */
+.bg-purple-100 {
+    background-color: rgba(78, 173, 181, 0.15) !important;
+}
+.text-purple-600 {
+    color: #4EADB5 !important;
+}
+
+/* Status Badge Colors - Completed */
+.bg-green-100.text-green-800 {
+    background-color: rgba(78, 173, 181, 0.2) !important;
+    color: #235961 !important;
+}
+
+/* Status Badge Colors - In Progress / Pending */
+.bg-blue-100.text-blue-800 {
+    background-color: rgba(61, 149, 160, 0.2) !important;
+    color: #2d7179 !important;
+}
+
+/* Links */
+a.text-blue-600 {
+    color: #3D95A0 !important;
+}
+a.text-blue-600:hover {
+    color: #2d7179 !important;
+}
+
+/* Optional: Add border accent to stat cards */
+.bg-white.rounded-lg.shadow.p-6 {
+    border-left: 4px solid transparent;
+}
+
+.bg-white.rounded-lg.shadow.p-6:nth-child(1) {
+    border-left-color: #3D95A0;
+}
+
+.bg-white.rounded-lg.shadow.p-6:nth-child(2) {
+    border-left-color: #4EADB5;
+}
+
+.bg-white.rounded-lg.shadow.p-6:nth-child(3) {
+    border-left-color: #2d7179;
+}
+
+.bg-white.rounded-lg.shadow.p-6:nth-child(4) {
+    border-left-color: #4EADB5;
+}
+
+/* Input Fields - Add focus state with brand color */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="file"] {
+    border-color: #e5e7eb !important;
+    transition: all 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+    outline: none !important;
+    border-color: #4EADB5 !important;
+    box-shadow: 0 0 0 3px rgba(78, 173, 181, 0.1) !important;
+}
+
+/* Save Button */
+.bg-blue-600 {
+    background-color: #3D95A0 !important;
+    transition: all 0.3s ease;
+}
+
+.bg-blue-600:hover,
+.hover\:bg-blue-700:hover {
+    background-color: #2d7179 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(61, 149, 160, 0.3);
+}
+
+.bg-blue-600:active {
+    transform: translateY(0);
+}
+
+/* Card Enhancement - Optional subtle brand accent */
+.bg-white.shadow.rounded {
+    border-top: 3px solid #4EADB5;
+}
+
+/* Helper Text */
+.text-gray-500 {
+    color: #6b7280 !important;
+}
+
+/* Section Dividers */
+hr {
+    border-color: rgba(78, 173, 181, 0.2) !important;
+}
+
+/* Jobs Management - Go Clear Color Scheme */
+
+/* Table Header */
+thead.bg-gray-50 {
+    background-color: rgba(61, 149, 160, 0.08) !important;
+}
+
+thead th.text-gray-500 {
+    color: #2d7179 !important;
+    font-weight: 600;
+}
+
+/* Table Hover State */
+tr.hover\:bg-gray-50:hover {
+    background-color: rgba(78, 173, 181, 0.05) !important;
+}
+
+/* Status Badges - Completed */
+.bg-green-100.text-green-800 {
+    background-color: rgba(78, 173, 181, 0.2) !important;
+    color: #235961 !important;
+    font-weight: 600;
+}
+
+/* Status Badges - In Progress */
+.bg-blue-100.text-blue-800 {
+    background-color: rgba(61, 149, 160, 0.2) !important;
+    color: #2d7179 !important;
+    font-weight: 600;
+}
+
+/* Status Badges - Assigned */
+.bg-yellow-100.text-yellow-800 {
+    background-color: rgba(78, 173, 181, 0.15) !important;
+    color: #235961 !important;
+    font-weight: 600;
+}
+
+/* View Link */
+a.text-blue-600 {
+    color: #3D95A0 !important;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+a.text-blue-600:hover,
+a.hover\:text-blue-900:hover {
+    color: #2d7179 !important;
+    text-decoration: underline;
+}
+
+/* Table Borders */
+.border-gray-200 {
+    border-color: rgba(61, 149, 160, 0.15) !important;
+}
+
+.divide-gray-200 > * {
+    border-color: rgba(61, 149, 160, 0.1) !important;
+}
+
+/* Card Header Enhancement */
+.bg-white.rounded-lg.shadow {
+    border-top: 3px solid #4EADB5;
+}
+
+/* Pagination Links (if using default Laravel pagination) */
+.pagination .page-link {
+    color: #3D95A0 !important;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #3D95A0 !important;
+    border-color: #3D95A0 !important;
+}
+
+.pagination .page-link:hover {
+    background-color: rgba(61, 149, 160, 0.1) !important;
+    color: #2d7179 !important;
+}
+
+
+/* Job Details Page - Go Clear Color Scheme */
+
+/* Status Badges */
+.bg-green-100.text-green-800 {
+    background-color: rgba(78, 173, 181, 0.2) !important;
+    color: #235961 !important;
+    font-weight: 600;
+}
+
+.bg-blue-100.text-blue-800 {
+    background-color: rgba(61, 149, 160, 0.2) !important;
+    color: #2d7179 !important;
+    font-weight: 600;
+}
+
+.bg-yellow-100.text-yellow-800 {
+    background-color: rgba(78, 173, 181, 0.15) !important;
+    color: #235961 !important;
+    font-weight: 600;
+}
+
+/* Section Headers */
+.text-gray-900 {
+    color: #0A2647 !important;
+}
+
+/* Borders */
+.border-gray-200 {
+    border-color: rgba(61, 149, 160, 0.15) !important;
+}
+
+/* Select Dropdown Focus */
+select.focus\:ring-blue-500:focus,
+select:focus {
+    outline: none !important;
+    border-color: #4EADB5 !important;
+    box-shadow: 0 0 0 3px rgba(78, 173, 181, 0.1) !important;
+}
+
+/* Update Button */
+.bg-blue-600 {
+    background-color: #3D95A0 !important;
+    transition: all 0.3s ease;
+}
+
+.bg-blue-600:hover,
+.hover\:bg-blue-700:hover {
+    background-color: #2d7179 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(61, 149, 160, 0.3);
+}
+
+/* View Profile Links */
+.text-blue-600 {
+    color: #3D95A0 !important;
+    font-weight: 600;
+}
+
+.border-blue-600 {
+    border-color: #3D95A0 !important;
+}
+
+.hover\:bg-blue-50:hover {
+    background-color: rgba(78, 173, 181, 0.08) !important;
+}
+
+.text-blue-600:hover {
+    color: #2d7179 !important;
+}
+
+/* Cancellation Alert */
+.bg-red-50 {
+    background-color: #fef2f2 !important;
+}
+
+.border-red-200 {
+    border-color: #fecaca !important;
+}
+
+.text-red-900 {
+    color: #991b1b !important;
+}
+
+.text-red-800 {
+    color: #b91c1c !important;
+}
+
+/* Card Enhancements */
+.bg-white.rounded-lg.shadow {
+    border-top: 3px solid #4EADB5;
+}
+
+/* Avatar Rings - Optional Enhancement */
+img.rounded-full {
+    border: 1px solid #4EADB5;
+}
+
+/* Price/Stats Display */
+.text-lg.font-bold.text-gray-900 {
+    color: #2d7179 !important;
+}
+
+/* Section Labels */
+.text-xs.uppercase.text-gray-500 {
+    color: #6b7280 !important;
+    letter-spacing: 0.05em;
+}
+
+/* Rating Star Enhancement */
+.text-gray-900:has(⭐) {
+    color: #3D95A0 !important;
+}
+.bg-gray-700{
+    background-color: #59a1a7;
+}
+
+.rounded-full {
+    border-radius: 9999px;
+    background-color: #54a5af;
+}
+
+

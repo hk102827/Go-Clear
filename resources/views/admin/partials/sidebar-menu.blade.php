@@ -1,0 +1,105 @@
+     <div class="px-4">
+                    <a href="{{ route('admin.dashboard') }}"
+                        class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors
+                                  @if (Route::currentRouteName() === 'admin.dashboard') bg-gray-800 text-white shadow-inner @else text-gray-200 hover:bg-gray-800 hover:text-white @endif">
+                        <!-- icon -->
+                        <svg class="w-5 h-5 text-gray-300 group-hover:text-white" fill="currentColor"
+                            viewBox="0 0 20 20">
+                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4z"></path>
+                            <path d="M3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z"></path>
+                            <path d="M14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                        </svg>
+                        Dashboard
+                    </a>
+
+                    <div class="mt-6 mb-2 text-xs uppercase text-gray-500 font-semibold">Users</div>
+
+                    <a href="{{ route('admin.users.customers') }}"
+                        class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors @if (Route::currentRouteName() === 'admin.users.customers') bg-gray-800 text-white @else text-gray-200 hover:bg-gray-800 hover:text-white @endif">
+                        <svg class="w-5 h-5 text-gray-300 group-hover:text-white" fill="currentColor"
+                            viewBox="0 0 20 20">
+                            <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM16 17v-1a4 4 0 00-4-4H8a4 4 0 00-4 4v1h12z" />
+                        </svg>
+                        Customers
+                    </a>
+
+                    <a href="{{ route('admin.users.drivers') }}"
+                        class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors @if (Route::currentRouteName() === 'admin.users.drivers') bg-gray-800 text-white @else text-gray-200 hover:bg-gray-800 hover:text-white @endif">
+                        <svg class="w-5 h-5 text-gray-300 group-hover:text-white" fill="currentColor"
+                            viewBox="0 0 20 20">
+                            <path d="M3 13l1-5h12l1 5H3z" />
+                            <path d="M7 16a1 1 0 100-2 1 1 0 000 2zM13 16a1 1 0 100-2 1 1 0 000 2z" />
+                        </svg>
+                        Drivers
+                    </a>
+
+                    <div class="mt-6 mb-2 text-xs uppercase text-gray-500 font-semibold">Management</div>
+
+                    <a href="{{ route('admin.verifications.index') }}"
+                        class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors @if (Route::currentRouteName() === 'admin.verifications.index') bg-gray-800 text-white @else text-gray-200 hover:bg-gray-800 hover:text-white @endif">
+                        <svg class="w-5 h-5 text-gray-300 group-hover:text-white" fill="currentColor"
+                            viewBox="0 0 20 20">
+                            <path d="M9 12l2 2 4-6" />
+                        </svg>
+                        Driver Verification
+                    </a>
+
+                    <a href="{{ route('admin.services.index') }}"
+                        class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors @if (Route::currentRouteName() === 'admin.services.index') bg-gray-800 text-white @else text-gray-200 hover:bg-gray-800 hover:text-white @endif">
+                        <svg class="w-5 h-5 text-gray-300 group-hover:text-white" fill="currentColor"
+                            viewBox="0 0 20 20">
+                            <path d="M4 3h12v4H4zM4 9h12v8H4z" />
+                        </svg>
+                        Services
+                    </a>
+
+                    <a href="{{ route('admin.jobs.index') }}"
+                        class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors @if (Route::currentRouteName() === 'admin.jobs.index') bg-gray-800 text-white @else text-gray-200 hover:bg-gray-800 hover:text-white @endif">
+                        <svg class="w-5 h-5 text-gray-300 group-hover:text-white" fill="currentColor"
+                            viewBox="0 0 20 20">
+                            <path d="M6 2h8v2H6zM4 7h12v9H4z" />
+                        </svg>
+                        Jobs
+                    </a>
+
+                    <a href="{{ route('admin.transactions.index') }}"
+                        class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors @if (Route::currentRouteName() === 'admin.transactions.index') bg-gray-800 text-white @else text-gray-200 hover:bg-gray-800 hover:text-white @endif">
+                        <svg class="w-5 h-5 text-gray-300 group-hover:text-white" fill="currentColor"
+                            viewBox="0 0 20 20">
+                            <path d="M3 3h14v4H3zM3 9h14v8H3z" />
+                        </svg>
+                        Transactions
+                    </a>
+
+                    <div class="mt-6 mb-2 text-xs uppercase text-gray-500 font-semibold">Settings</div>
+
+                    <a href="{{ route('admin.settings.index') }}"
+                        class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors @if (Route::currentRouteName() === 'admin.settings.index') bg-gray-800 text-white @else text-gray-200 hover:bg-gray-800 hover:text-white @endif">
+                        <svg class="w-5 h-5 text-gray-300 group-hover:text-white" fill="currentColor"
+                            viewBox="0 0 20 20">
+                            <path
+                                d="M11.3 1.046a1 1 0 00-2.6 0L7.3 3.17a8.015 8.015 0 00-1.77.515l-2.2-.88a1 1 0 00-1.21.33L.32 6.1a1 1 0 00.33 1.21l.88 2.2c-.17.58-.29 1.18-.33 1.77L1.046 11.3a1 1 0 000 2.6L3.17 12.7c.17.58.39 1.14.66 1.66l-.88 2.2a1 1 0 00.33 1.21l2.2 1.55a1 1 0 001.21-.33l.88-2.2c.52.27 1.08.49 1.66.66L11.3 22.954a1 1 0 002.6 0l1.04-2.124c.58-.17 1.14-.39 1.66-.66l.88 2.2a1 1 0 001.21.33l2.2-1.55a1 1 0 00.33-1.21l-.88-2.2c.27-.52.49-1.08.66-1.66L22.954 13.9a1 1 0 000-2.6L20.83 9.7c-.17-.58-.39-1.14-.66-1.66l.88-2.2a1 1 0 00-.33-1.21L18.5 2.06a1 1 0 00-1.21.33l-.88 2.2a8.015 8.015 0 00-1.66-.66L11.3 1.046z" />
+                        </svg>
+                        Platform Settings
+                    </a>
+
+                    <div class="mt-6 mb-2 text-xs uppercase text-gray-500 font-semibold">Account</div>
+                    <a href="{{ route('admin.account.edit') }}"
+                        class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors @if (Route::currentRouteName() === 'admin.account.edit') bg-gray-800 text-white @else text-gray-200 hover:bg-gray-800 hover:text-white @endif">
+                        <svg class="w-5 h-5 text-gray-300" ...></svg>
+                        My Account
+                    </a>
+
+
+                    <form method="POST" action="{{ route('admin.logout') }}" class="px-0">
+                        @csrf
+                        <button type="submit"
+                            class="w-full text-left px-3 py-2 rounded-md text-sm text-gray-200 hover:bg-gray-800 hover:text-white transition-colors">
+                            <svg class="w-5 h-5 inline-block mr-2 align-middle text-gray-300" fill="currentColor"
+                                viewBox="0 0 20 20">
+                                <path d="M3 3h8v4H3zM3 9h8v8H3z" />
+                            </svg>
+                            Logout
+                        </button>
+                    </form>
+                </div>
