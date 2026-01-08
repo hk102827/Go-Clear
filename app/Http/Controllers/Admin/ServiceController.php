@@ -26,6 +26,7 @@ class ServiceController extends Controller
             'name' => 'required|string|unique:services',
             'description' => 'required|string',
             'icon' => 'nullable|string',
+            'pricing_type' => 'required|in:per_mile,per_hour,per_ton_kg',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
@@ -51,6 +52,7 @@ class ServiceController extends Controller
             'name' => 'required|string|unique:services,name,' . $service->id,
             'description' => 'required|string',
             'icon' => 'nullable|string',
+            'pricing_type' => 'required|in:per_mile,per_hour,per_ton_kg',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);

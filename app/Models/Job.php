@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Job extends Model
 {
     protected $fillable = [
-        'customer_id', 'driver_id', 'service_id',
+        'customer_id', 'driver_id', 'service_id','status',
         'pickup_address', 'pickup_postcode', 'pickup_latitude', 'pickup_longitude',
         'delivery_address', 'delivery_postcode', 'delivery_latitude', 'delivery_longitude',
         'description', 'scheduled_at', 'status', 'estimated_price', 'final_price', 'distance', 'duration', 'cancellation_reason'
@@ -32,6 +32,11 @@ class Job extends Model
     {
         return $this->hasOne(Transaction::class);
     }
+    public function requests()
+    {
+        return $this->hasMany(\App\Models\JobRequest::class);
+    }
+
 
     public function rating()
     {

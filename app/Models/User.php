@@ -63,6 +63,17 @@ class User extends Authenticatable
     {
         return $this->hasOne(DriverEarning::class, 'driver_id');
     }
+        // Customer ke jobs
+    public function customerJobs()
+    {
+        return $this->hasMany(Job::class, 'customer_id');
+    }
+
+    // Driver ke jobs (future use)
+    public function driverJobs()
+    {
+        return $this->hasMany(Job::class, 'driver_id');
+    }
 
     public function isDriver()
     {

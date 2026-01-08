@@ -10,6 +10,10 @@ use App\Models\DriverEarning;
 use App\Models\Rating;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use App\Services\NotificationService;
+use App\Models\JobRequest;
+
+
 
 class JobController extends Controller
 {
@@ -31,8 +35,17 @@ class JobController extends Controller
 
         $validated['customer_id'] = $request->user()->id;
         $validated['status'] = 'pending';
+        
 
         $job = Job::create($validated);
+    // 🔔 Send notification to customer
+        NotificationService::custom(
+            $request->user(),
+            'JOB_UPDATE',
+            'Booking Created',
+            'Your booking has been created successfully. We will assign a driver soon.',
+            ['job_id' => $job->id]
+        );
 
         return response()->json([
             'success' => true,
@@ -93,10 +106,10 @@ class JobController extends Controller
 
     public function acceptJob(Request $request, Job $job)
     {
-        if ($job->status !== 'pending') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Job is not available'
+        if ($job->driver_id && $job->driver_id !== $request->user()->id) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Job is not available'
             ], 400);
         }
 
@@ -114,6 +127,12 @@ class JobController extends Controller
             'driver_id' => $driver->id,
             'status' => 'accepted'
         ]);
+     // 🔔 Notify customer that driver has been assigned
+        NotificationService::driverAssigned(
+            $job->customer,
+            $job->id,
+            $driver->name
+        );
 
         return response()->json([
             'success' => true,
@@ -122,30 +141,35 @@ class JobController extends Controller
         ]);
     }
 
-    public function startJob(Job $job)
-    {
-        if ($job->driver_id !== auth()->id()) {
+        public function startJob(Job $job)
+        {
+       
+
+            if ($job->driver_id !== auth()->id()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+
+            if ($job->status !== 'accepted') {
+                return response()->json(['success' => false, 'message' => 'Job not accepted'], 400);
+            }
+
+            $job->update([
+                'status' => 'in_progress'
+            ]);
+                    // 🔔 Notify customer that job has started
+            NotificationService::jobStarted(
+                $job->customer,
+                $job->id,
+                auth()->user()->name
+            );
+
             return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized'
-            ], 403);
+                'success' => true,
+                'message' => 'Job started',
+                'data' => $job
+            ]);
         }
 
-        if ($job->status !== 'accepted') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Job cannot be started'
-            ], 400);
-        }
-
-        $job->update(['status' => 'in_progress']);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Job started',
-            'data' => $job
-        ]);
-    }
 
     public function completeJob(Request $request, Job $job)
     {
@@ -177,12 +201,15 @@ class JobController extends Controller
         ]);
 
         // Calculate commission
-        $commission_rate = Setting::get('admin_commission', 15);
+        $commission_rate = Setting::where('key', 'admin_commission')->value('value') ?? 15;
+$commission_rate = (float) $commission_rate; // ensure it's numeric
+
         $admin_commission = ($validated['final_price'] * $commission_rate) / 100;
         $driver_earning = $validated['final_price'] - $admin_commission;
 
         // Create transaction
         $transaction = Transaction::create([
+            'transaction_id' => 'TXN-' . now()->timestamp . '-' . rand(1000, 9999),
             'job_id' => $job->id,
             'customer_id' => $job->customer_id,
             'driver_id' => $job->driver_id,
@@ -192,6 +219,7 @@ class JobController extends Controller
             'payment_method' => 'card',
             'status' => 'completed',
         ]);
+
 
         // Update driver earnings
         $earnings = DriverEarning::firstOrCreate(
@@ -204,6 +232,18 @@ class JobController extends Controller
 
         // Update driver stats
         $job->driver->driverProfile->increment('total_jobs');
+         // 🔔 Notify customer about job completion
+        NotificationService::jobCompleted(
+            $job->customer,
+            $job->id
+        );
+
+        // 🔔 Notify customer about payment
+        NotificationService::paymentReceived(
+            $job->customer,
+            $job->id,
+            $validated['final_price']
+        );
 
         return response()->json([
             'success' => true,
@@ -239,6 +279,16 @@ class JobController extends Controller
             'status' => 'cancelled',
             'cancellation_reason' => $validated['cancellation_reason']
         ]);
+        // 🔔 Notify driver if assigned
+        if ($job->driver_id) {
+            NotificationService::custom(
+                $job->driver,
+                'JOB_UPDATE',
+                'Job Cancelled',
+                "Customer has cancelled the booking. Reason: {$validated['cancellation_reason']}",
+                ['job_id' => $job->id]
+            );
+        }
 
         return response()->json([
             'success' => true,
@@ -266,6 +316,13 @@ class JobController extends Controller
             'rating' => 'required|integer|min:1|max:5',
             'review' => 'nullable|string|max:500'
         ]);
+        if (!$job->driver_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot rate job without assigned driver'
+            ], 400);
+        }
+
 
         $rating = Rating::updateOrCreate(
             ['job_id' => $job->id],
@@ -279,6 +336,17 @@ class JobController extends Controller
 
         // Update driver's average rating
         $this->updateDriverRating($job->driver_id);
+    // 🔔 Notify driver if assigned
+        if ($job->driver_id) {
+            NotificationService::custom(
+                $job->driver,
+                'JOB_UPDATE',
+                'New Rating Received',
+                'You have received a new rating from the customer.',
+                ['job_id' => $job->id]
+            );
+
+        }
 
         return response()->json([
             'success' => true,
@@ -294,6 +362,62 @@ class JobController extends Controller
         $driver = User::find($driver_id);
         $driver->driverProfile->update([
             'rating' => round($avgRating, 2)
+        ]);
+    }
+
+    public function confirmBooking(Request $request, Job $job)
+    {
+        // Only customer can confirm
+    if ($job->customer_id !== auth()->id()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unauthorized',
+            'debug' => [
+                'job_customer_id' => $job->customer_id,
+                'auth_id' => auth()->id(),
+            ]
+        ], 403);
+    }
+
+
+        if ($job->status !== 'pending') {
+            return response()->json(['success' => false, 'message' => 'Job cannot be confirmed'], 400);
+        }
+
+        // Expect driver_ids from frontend (selected nearby)
+        $validated = $request->validate([
+            'driver_ids' => 'required|array|min:1',
+            'driver_ids.*' => 'integer|exists:users,id'
+        ]);
+
+        // Prevent duplicate requests
+        $already = JobRequest::where('job_id', $job->id)->whereIn('driver_id', $validated['driver_ids'])->count();
+
+        // Create requests
+        foreach ($validated['driver_ids'] as $driverId) {
+            JobRequest::firstOrCreate(
+                ['job_id' => $job->id, 'driver_id' => $driverId],
+                ['status' => 'sent', 'sent_at' => now()]
+            );
+
+            // 🔔 notify each driver
+            NotificationService::custom(
+                \App\Models\User::find($driverId),
+                'JOB_UPDATE',
+                'New Job Request',
+                'You have received a new job request.',
+                ['job_id' => $job->id]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Request sent to drivers',
+            'data' => [
+                'job_id' => $job->id,
+                'sent_to' => count($validated['driver_ids']),
+                'duplicate_skipped' => $already
+            ]
         ]);
     }
 }

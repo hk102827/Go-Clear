@@ -70,6 +70,14 @@
                         </svg>
                         Transactions
                     </a>
+                        <!-- 🔔 NOTIFICATIONS MENU ITEM - ADD THIS -->
+                    <a href="{{ route('admin.notifications.index') }}"
+                        class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors @if (Route::currentRouteName() === 'admin.notifications.index' || Route::currentRouteName() === 'admin.notifications.create') bg-gray-800 text-white @else text-gray-200 hover:bg-gray-800 hover:text-white @endif">
+                        <svg class="w-5 h-5 text-gray-300 group-hover:text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                        </svg>
+                        Notifications
+                    </a>
 
                     <div class="mt-6 mb-2 text-xs uppercase text-gray-500 font-semibold">Settings</div>
 

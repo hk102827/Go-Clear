@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use Illuminate\Http\Request;
+use App\Services\NotificationService;
 
 class DriverVerificationController extends Controller
 {
@@ -23,6 +24,14 @@ class DriverVerificationController extends Controller
     public function approve(DriverProfile $driverProfile)
     {
         $driverProfile->update(['verification_status' => 'verified']);
+        // 🔔 Notify driver about verification approval
+        NotificationService::custom(
+            $driverProfile->user,
+            'GENERAL',
+            'Verification Approved',
+            'Congratulations! Your driver account has been verified. You can now start accepting jobs.',
+            ['verification_status' => 'verified']
+        );
         return redirect()->back()->with('success', 'Driver approved successfully.');
     }
 
@@ -32,13 +41,33 @@ class DriverVerificationController extends Controller
         $driverProfile->update([
             'verification_status' => 'rejected',
             'rejection_reason' => $request->rejection_reason
+            
         ]);
+        // 🔔 Notify driver about rejection
+        NotificationService::custom(
+            $driverProfile->user,
+            'GENERAL',
+            'Verification Rejected',
+            "Your verification was rejected. Reason: {$request->rejection_reason}. Please update your documents and resubmit.",
+            [
+                'verification_status' => 'rejected',
+                'rejection_reason' => $request->rejection_reason
+            ]
+        );
         return redirect()->back()->with('success', 'Driver rejected successfully.');
     }
 
     public function markInProgress(DriverProfile $driverProfile)
     {
         $driverProfile->update(['verification_status' => 'in_progress']);
+                // 🔔 Notify driver
+        NotificationService::custom(
+            $driverProfile->user,
+            'GENERAL',
+            'Verification In Progress',
+            'Your documents are currently being reviewed. We will notify you once the verification is complete.',
+            ['verification_status' => 'in_progress']
+        );
         return redirect()->back()->with('success', 'Status updated to in progress.');
     }
 }

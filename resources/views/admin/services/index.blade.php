@@ -17,6 +17,7 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pricing Type</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Drivers</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -35,6 +36,18 @@
                                 <span class="text-sm font-medium text-gray-900">{{ $service->name }}</span>
                             </div>
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            @php
+                                $pricingLabels = [
+                                    'per_mile' => 'Per Mile',
+                                    'per_hour' => 'Per Hour',
+                                    'per_ton_kg' => 'Per Ton/Kg',
+                                ];
+                            @endphp
+
+                            {{ $pricingLabels[$service->pricing_type] ?? '-' }}
+                        </td>
+
                         <td class="px-6 py-4 text-sm text-gray-600">{{ Str::limit($service->description, 50) }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $service->drivers->count() }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">

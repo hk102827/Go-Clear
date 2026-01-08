@@ -14,6 +14,32 @@
                 <input type="text" id="name" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('name') border-red-500 @enderror" value="{{ old('name') }}">
                 @error('name')<span class="text-red-600 text-sm">{{ $message }}</span>@enderror
             </div>
+            <div class="mb-6">
+            <label for="pricing_type" class="block text-sm font-medium text-gray-900 mb-2">
+                Pricing Type
+            </label>
+
+            <select id="pricing_type" name="pricing_type"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+                @error('pricing_type') border-red-500 @enderror">
+
+                <option value="">Select pricing type</option>
+                <option value="per_mile" {{ old('pricing_type')=='per_mile' ? 'selected' : '' }}>
+                    Price per Mile
+                </option>
+                <option value="per_hour" {{ old('pricing_type')=='per_hour' ? 'selected' : '' }}>
+                    Price per Hour
+                </option>
+                <option value="per_ton_kg" {{ old('pricing_type')=='per_ton_kg' ? 'selected' : '' }}>
+                    Price per Ton / Kg
+                </option>
+            </select>
+
+            @error('pricing_type')
+                <span class="text-red-600 text-sm">{{ $message }}</span>
+            @enderror
+        </div>
+
 
             <div class="mb-6">
                 <label for="description" class="block text-sm font-medium text-gray-900 mb-2">Description</label>

@@ -14,10 +14,8 @@ return new class extends Migration
         Schema::create('driver_profiles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            // Driving License Images
             $table->string('driving_license_front')->nullable();
             $table->string('driving_license_back')->nullable();
-            // Other images & details
             $table->string('vehicle_photo')->nullable();
             $table->string('number_plate')->nullable();
             $table->string('insurance_proof')->nullable();

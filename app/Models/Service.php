@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Service extends Model
 {
-    protected $fillable = ['name', 'slug', 'description', 'icon', 'is_active'];
+    protected $fillable = ['name', 'slug', 'description', 'icon', 'is_active', 'pricing_type',];
 
     public function drivers()
     {

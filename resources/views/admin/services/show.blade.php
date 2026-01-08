@@ -2,6 +2,14 @@
 
 @section('title', $service->name)
 @section('page-title', 'Service - ' . $service->name)
+@php
+    $pricingLabels = [
+        'per_mile' => 'Per Mile',
+        'per_hour' => 'Per Hour',
+        'per_ton_kg' => 'Per Ton / Kg',
+    ];
+@endphp
+
 
 @section('content')
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -54,8 +62,17 @@
                     <p class="text-xs uppercase text-gray-500 font-semibold">Last Updated</p>
                     <p class="text-gray-900 font-medium">{{ $service->updated_at->format('M d, Y') }}</p>
                 </div>
+
+                <!-- ✅ ADD THIS -->
+                <div>
+                    <p class="text-xs uppercase text-gray-500 font-semibold">Pricing Type</p>
+                    <span class="inline-block mt-1 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                        {{ $pricingLabels[$service->pricing_type] ?? '-' }}
+                    </span>
+                </div>
             </div>
         </div>
+
 
         <div class="bg-white rounded-lg shadow p-6">
             <div class="flex justify-between items-center mb-4">

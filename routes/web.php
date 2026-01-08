@@ -14,6 +14,7 @@ use App\Http\Controllers\DriverOnboardingController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Controllers\Admin\NotificationController;
 
 
 
@@ -78,6 +79,23 @@ Route::prefix('admin')->name('admin.')->middleware([\App\Http\Middleware\AdminMi
         Route::get('/', [TransactionController::class, 'index'])->name('index');
         Route::get('/{transaction}', [TransactionController::class, 'show'])->name('show');
     });
+
+    // 🔔 NOTIFICATION ROUTES - ADD THIS SECTION
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\NotificationController::class, 'create'])->name('create');
+        Route::post('/send', [\App\Http\Controllers\Admin\NotificationController::class, 'store'])->name('send');
+        Route::post('/send-bulk', [\App\Http\Controllers\Admin\NotificationController::class, 'sendBulk'])->name('send-bulk');
+        Route::post('/send-promotion', [DashboardController::class, 'sendPromotion'])->name('send-promotion');
+        Route::delete('/{notification}', [\App\Http\Controllers\Admin\NotificationController::class, 'destroy'])->name('destroy');
+        // 🔔 Admin Bell Notification (AJAX)
+        Route::get('/bell', [NotificationController::class, 'bell'])
+            ->name('bell');
+
+        Route::post('/{notification}/read', [NotificationController::class, 'markAsRead'])
+            ->name('read');
+
+    });
     
     // Settings
     Route::prefix('settings')->name('settings.')->group(function () {
@@ -119,3 +137,5 @@ Route::prefix('admin')->name('admin.')->middleware([\App\Http\Middleware\AdminMi
     // Route::get('/driver/verification-status', [DriverOnboardingController::class, 'showVerificationStatus'])
     //     ->name('driver.verification.status');
 });
+
+

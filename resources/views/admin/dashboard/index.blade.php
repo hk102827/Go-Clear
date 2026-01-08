@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('title', 'Dashboard')
-{{-- @section('page-title', 'Dashboard') --}}
 
 @section('content')
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -54,6 +53,43 @@
     </div>
 </div>
 
+<!-- Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Revenue Chart (Last 7 Days) -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Revenue (Last 7 Days)</h3>
+        <div style="height: 300px;">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Jobs Status Distribution -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Jobs Status Distribution</h3>
+        <div style="height: 300px;">
+            <canvas id="jobsStatusChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Monthly Revenue Trend -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Monthly Revenue (Last 6 Months)</h3>
+        <div style="height: 300px;">
+            <canvas id="monthlyRevenueChart"></canvas>
+        </div>
+    </div>
+
+    <!-- User Growth -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">User Growth (Last 30 Days)</h3>
+        <div style="height: 300px;">
+            <canvas id="userGrowthChart"></canvas>
+        </div>
+    </div>
+</div>
+
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
@@ -71,23 +107,7 @@
                             {{ ucfirst($job->status) }}
                         </span>
                     </div>
-                    @php
-    $dt = $transaction->created_at ?? null;
-    // if it's a Carbon/DateTime use format, otherwise try parse string; if null show 'N/A'
-    $createdAtLabel = 'N/A';
-    if ($dt instanceof \DateTimeInterface) {
-        $createdAtLabel = $dt->format('M d, Y H:i');
-    } elseif (is_string($dt) && trim($dt) !== '') {
-        try {
-            $createdAtLabel = \Carbon\Carbon::parse($dt)->format('M d, Y H:i');
-        } catch (\Throwable $e) {
-            $createdAtLabel = 'N/A';
-        }
-    }
-@endphp
-
-<p class="text-xs text-gray-500 mt-2">{{ $createdAtLabel }}</p>
-
+                    <p class="text-xs text-gray-500 mt-2">{{ $job->created_at->format('M d, Y H:i') }}</p>
                 </div>
             @empty
                 <p class="px-6 py-4 text-gray-500">No jobs yet</p>
@@ -140,4 +160,168 @@
         <p class="text-4xl font-bold text-gray-900">{{ $totalServices }}</p>
     </div>
 </div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Revenue Chart (Last 7 Days)
+    const revenueData = @json($revenueChart ?? []);
+    if (revenueData.length > 0) {
+        const revenueCtx = document.getElementById('revenueChart');
+        if (revenueCtx) {
+            new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: revenueData.map(d => d.date),
+                    datasets: [{
+                        label: 'Revenue ($)',
+                        data: revenueData.map(d => d.total),
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Jobs Status Chart
+    const jobsStatusData = @json($jobsStatusChart ?? []);
+    if (jobsStatusData.length > 0) {
+        const jobsStatusCtx = document.getElementById('jobsStatusChart');
+        if (jobsStatusCtx) {
+            new Chart(jobsStatusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: jobsStatusData.map(d => d.status),
+                    datasets: [{
+                        data: jobsStatusData.map(d => d.count),
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(251, 191, 36, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(139, 92, 246, 0.8)',
+                            'rgba(236, 72, 153, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Monthly Revenue Chart
+    const monthlyRevenueData = @json($monthlyRevenue ?? []);
+    if (monthlyRevenueData.length > 0) {
+        const monthlyRevenueCtx = document.getElementById('monthlyRevenueChart');
+        if (monthlyRevenueCtx) {
+            new Chart(monthlyRevenueCtx, {
+                type: 'bar',
+                data: {
+                    labels: monthlyRevenueData.map(d => d.month),
+                    datasets: [{
+                        label: 'Revenue ($)',
+                        data: monthlyRevenueData.map(d => d.total),
+                        backgroundColor: 'rgba(139, 92, 246, 0.8)',
+                        borderColor: 'rgb(139, 92, 246)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // User Growth Chart
+    const userGrowthData = @json($userGrowth ?? []);
+    if (userGrowthData.length > 0) {
+        const userGrowthCtx = document.getElementById('userGrowthChart');
+        if (userGrowthCtx) {
+            new Chart(userGrowthCtx, {
+                type: 'line',
+                data: {
+                    labels: userGrowthData.map(d => d.date),
+                    datasets: [{
+                        label: 'New Users',
+                        data: userGrowthData.map(d => d.count),
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+});
+</script>
 @endsection

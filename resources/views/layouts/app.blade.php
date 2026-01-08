@@ -10,6 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/solid.min.css">
     <link rel="stylesheet" href="{{ asset('css/sidebar-brand.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <!-- Mobile-first fixes -->
     <style>
@@ -107,11 +108,27 @@
 
                     <!-- Page Title -->
                     <h1 class="text-xl md:text-2xl font-bold text-gray-800">@yield('page-title', 'Dashboard')</h1>
+                <!-- Notifications Bell -->
+            
+                    <div class="relative ml-auto mr-2">
+                        <button id="notificationBtn" class="relative">
+                            🔔
+                            <span id="notificationCount"
+                                class="absolute -top-1 -right-1 bg-red-600 text-white text-xs px-1 rounded-full hidden">
+                            </span>
+                        </button>
+
+                        <div id="notificationDropdown"
+                            class="hidden absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-lg z-50">
+                            <ul id="notificationList"></ul>
+                        </div>
+                    </div>
 
                     <!-- Profile Dropdown Button -->
                     @php $image = Auth::user()->profile_image ? asset('storage/' . Auth::user()->profile_image) : null; @endphp
                     
                     <div class="relative">
+                        
                         <button id="profileDropdownBtn" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors">
                             @if($image)
                                 <div class="relative w-10 h-10">
@@ -189,6 +206,59 @@
             </main>
         </div>
     </div>
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const btn = document.getElementById('notificationBtn');
+    const dropdown = document.getElementById('notificationDropdown');
+    const list = document.getElementById('notificationList');
+    const badge = document.getElementById('notificationCount');
+
+    btn.addEventListener('click', () => {
+        dropdown.classList.toggle('hidden');
+    });
+
+    function loadNotifications() {
+        fetch('{{ route("admin.notifications.bell") }}')
+            .then(res => res.json())
+            .then(data => {
+
+                list.innerHTML = '';
+                badge.textContent = data.unread;
+                badge.classList.toggle('hidden', data.unread === 0);
+
+                data.notifications.forEach(n => {
+                    const li = document.createElement('li');
+                    li.className = 'p-3 border-b hover:bg-gray-100 cursor-pointer';
+                    li.innerHTML = `<strong>${n.title}</strong><br>${n.message}`;
+
+  li.onclick = () => {
+
+    // 1️⃣ Mark as read
+    fetch(`/admin/notifications/${n.id}/read`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    });
+
+    // 2️⃣ Redirect to verification page
+    if (n.data && n.data.driver_profile_id) {
+        window.location.href = `/admin/verifications/${n.data.driver_profile_id}`;
+    }
+};
+
+
+                    list.appendChild(li);
+                });
+            });
+    }
+
+    loadNotifications();
+});
+</script>
+
+
 
     <!-- Improved Scripts -->
     <script>
