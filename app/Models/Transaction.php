@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Transaction extends Model
 {
     protected $fillable = [
-        'transaction_id', 'job_id', 'customer_id', 'driver_id',
+        'transaction_id', 'job_id', 'customer_id', 'driver_id','withdrawal_id',
         'amount', 'admin_commission', 'driver_earning', 'payment_method', 'status'
     ];
 

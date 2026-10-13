@@ -29,104 +29,133 @@ class DriverRequestController extends Controller
     }
 
     // POST /driver/requests/{request}/accept
-    public function accept(Request $request, JobRequest $requestModel)
-    {
-        $driverId = $request->user()->id;
+public function accept(Request $request, JobRequest $jobRequest)
+{
+    $driverId = $request->user()->id;
 
-        if ($requestModel->driver_id !== $driverId) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
+    if ($jobRequest->driver_id !== $driverId) {
+        return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+    }
 
-        if ($requestModel->status !== 'sent') {
-            return response()->json(['success' => false, 'message' => 'Request not available'], 400);
-        }
+    if ($jobRequest->status !== 'sent') {
+        return response()->json(['success' => false, 'message' => 'Request not available'], 400);
+    }
 
-        // Driver verified check (same as your acceptJob)
-        if (!$request->user()->driverProfile->isVerified()) {
-            return response()->json(['success' => false, 'message' => 'Driver verification pending'], 403);
-        }
+    if (!$request->user()->driverProfile->isVerified()) {
+        return response()->json(['success' => false, 'message' => 'Driver verification pending'], 403);
+    }
 
-        try {
-            $result = DB::transaction(function () use ($requestModel, $driverId) {
+    try {
+        $result = DB::transaction(function () use ($jobRequest, $driverId) {
 
-                // Lock job row to prevent 2 drivers accepting same job
-                $job = Job::where('id', $requestModel->job_id)->lockForUpdate()->first();
+            $job = Job::where('id', $jobRequest->job_id)->lockForUpdate()->first();
 
-                if (!$job) {
-                    return ['ok' => false, 'code' => 404, 'msg' => 'Job not found'];
-                }
+            if (!$job) {
+                return ['ok' => false, 'code' => 404, 'msg' => 'Job not found'];
+            }
 
-                if ($job->status !== 'pending') {
-                    return ['ok' => false, 'code' => 400, 'msg' => 'Job not available'];
-                }
+            if ($job->status !== 'pending') {
+                return ['ok' => false, 'code' => 400, 'msg' => 'Job not available'];
+            }
 
-                // Assign driver + accepted
-                $job->update([
-                    'driver_id' => $driverId,
-                    'status' => 'accepted'
-                ]);
+            $job->update([
+                'driver_id' => $driverId,
+                'status' => 'accepted'
+            ]);
 
-                // Mark this request accepted
-                $requestModel->update([
-                    'status' => 'accepted',
+            $jobRequest->update([
+                'status' => 'accepted',
+                'responded_at' => now()
+            ]);
+
+            JobRequest::where('job_id', $job->id)
+                ->where('id', '!=', $jobRequest->id)
+                ->where('status', 'sent')
+                ->update([
+                    'status' => 'expired',
                     'responded_at' => now()
                 ]);
 
-                // Expire other requests for same job
-                JobRequest::where('job_id', $job->id)
-                    ->where('id', '!=', $requestModel->id)
-                    ->where('status', 'sent')
-                    ->update([
-                        'status' => 'expired',
-                        'responded_at' => now()
-                    ]);
+            return ['ok' => true, 'job' => $job->load(['customer','service'])];
+        });
 
-                return ['ok' => true, 'job' => $job->load(['customer','service'])];
-            });
-
-            if (!$result['ok']) {
-                return response()->json(['success' => false, 'message' => $result['msg']], $result['code']);
-            }
-
-            // 🔔 Notify customer
-            NotificationService::driverAssigned(
-                $result['job']->customer,
-                $result['job']->id,
-                $request->user()->name
-            );
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Job accepted successfully',
-                'data' => $result['job']
-            ]);
-
-        } catch (\Throwable $e) {
-            return response()->json(['success' => false, 'message' => 'Server error'], 500);
-        }
-    }
-
-    // POST /driver/requests/{request}/reject
-    public function reject(Request $request, JobRequest $requestModel)
-    {
-        $driverId = $request->user()->id;
-
-        if ($requestModel->driver_id !== $driverId) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        if (!$result['ok']) {
+            return response()->json(['success' => false, 'message' => $result['msg']], $result['code']);
         }
 
-        if ($requestModel->status !== 'sent') {
-            return response()->json(['success' => false, 'message' => 'Request not available'], 400);
-        }
-
-        $requestModel->update([
-            'status' => 'rejected',
-            'responded_at' => now()
-        ]);
+        NotificationService::driverAssigned(
+            $result['job']->customer,
+            $result['job']->id,
+            $request->user()->name
+        );
 
         return response()->json([
             'success' => true,
-            'message' => 'Request rejected'
+            'message' => 'Job accepted successfully',
+            'data' => $result['job']
+        ]);
+
+    } catch (\Throwable $e) {
+        return response()->json(['success' => false, 'message' => 'Server error'], 500);
+    }
+}
+
+    public function reject(Request $request, JobRequest $jobRequest)
+    {
+        $driverId = $request->user()->id;
+
+        if ($jobRequest->driver_id !== $driverId) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        if ($jobRequest->status !== 'sent') {
+            return response()->json(['success' => false, 'message' => 'Request not available'], 400);
+        }
+
+        $result = DB::transaction(function () use ($jobRequest) {
+
+            $jobRequest->update([
+                'status'       => 'rejected',
+                'responded_at' => now(),
+            ]);
+
+            $job = Job::where('id', $jobRequest->job_id)->lockForUpdate()->first();
+
+            if (!$job) {
+                return ['ok' => false, 'code' => 404, 'msg' => 'Job not found'];
+            }
+
+            if ($job->status === 'pending') {
+
+                $stillOpen = JobRequest::where('job_id', $job->id)
+                    ->where('status', 'sent')
+                    ->exists();
+
+                if (!$stillOpen) {
+                    $job->update(['status' => 'rejected']);
+                }
+            }
+
+            return ['ok' => true, 'job' => $job->fresh()];
+        });
+
+        if (!$result['ok']) {
+            return response()->json(['success' => false, 'message' => $result['msg']], $result['code']);
+        }
+
+        if ($result['job']->status === 'rejected') {
+            NotificationService::custom(
+                $result['job']->customer,
+                'JOB_UPDATE',
+                'No Driver Available',
+                'Unfortunately no driver accepted your booking. Please create a new booking.',
+                ['job_id' => $result['job']->id]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Request rejected',
         ]);
     }
 }

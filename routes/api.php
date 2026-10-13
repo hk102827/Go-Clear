@@ -1,7 +1,5 @@
 <?php
 
-// routes/api.php - FOR FLUTTER APP
-
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DriverController;
@@ -11,6 +9,11 @@ use App\Http\Controllers\Api\ServiceController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\DriverRequestController;
 use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\Api\SavedAddressController;
+use App\Http\Controllers\Api\CustomerProfileController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\AdminController;
+
 
 
 // Public Routes (No Authentication Required)
@@ -22,6 +25,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     Route::get('/services', [ServiceController::class, 'index']);
+     Route::post('/stripe/webhook', [PaymentController::class, 'handleWebhook']);
 
     // Protected Routes (Require Authentication)
     Route::middleware('auth:sanctum')->group(function () {
@@ -32,10 +36,13 @@ Route::prefix('v1')->group(function () {
         Route::post('/change-password', [AuthController::class, 'changePassword']);
         Route::get('/profile', [AuthController::class, 'getProfile']);
         Route::put('/profile', [AuthController::class, 'updateProfile']);
+        //  Route::get('/user', [AuthController::class, 'user']);
+        Route::get('/profile', [CustomerProfileController::class, 'getProfile']);
+        Route::put('/profile', [CustomerProfileController::class, 'updateProfile']);
+        Route::post('/change-password', [CustomerProfileController::class, 'changePassword']);
 
         // ========== DRIVER ROUTES ==========
         Route::prefix('driver')->group(function () {
-
             // Document Upload
             Route::post('/vehicle/details', [DriverController::class, 'uploadVehicleDetails']);
             Route::get('/vehicle/details', [DriverController::class, 'getVehicleDetails']);
@@ -55,36 +62,49 @@ Route::prefix('v1')->group(function () {
 
             // Online/Offline Status
             Route::post('/status/toggle', [DriverController::class, 'toggleOnlineStatus']);
+            Route::get('/status', [DriverController::class, 'getOnlineStatus']);
             Route::get('/dashboard', [DriverController::class, 'dashboard']);
-            // Route::get('/earnings', [DriverController::class, 'earnings']);
-            Route::get('/jobs', [DriverController::class, 'getJobs']);
-            Route::get('/jobs/{id}', [DriverController::class, 'getJobDetail']);
+            Route::get('/jobs', [DriverController::class, 'driverJobs']);
+            Route::post('/bank-details', [DriverController::class, 'addBankDetails']);
+            Route::get('/bank-details', [DriverController::class, 'getBankDetails']);
+            Route::put('/bank-details', [DriverController::class, 'updateBankDetails']);
             Route::get('/wallet', [DriverController::class, 'wallet']);
+            Route::get('/earnings-summary', [DriverController::class, 'earningsSummary']); // ← ADD THIS
+            Route::post('/withdraw-request', [DriverController::class, 'withdrawRequest']);
+            Route::get('/withdrawal-history', [DriverController::class, 'withdrawalHistory']);
+            Route::get('/pending-withdrawal', [DriverController::class, 'getPendingWithdrawal']);
             Route::get('/transactions', [DriverController::class, 'transactions']);
-            Route::post('/withdraw', [DriverController::class, 'withdrawRequest']);
             // Location Updates
             Route::post('/location/update', [DriverController::class, 'updateLocation']);
             Route::get('/location', [DriverController::class, 'getLocation']); // optional
              // ✅ Driver incoming requests (NEW)
             Route::get('/requests', [DriverRequestController::class, 'index']);
-
-            // ✅ Driver accept / reject (NEW)
-            Route::post('/requests/{request}/accept', [DriverRequestController::class, 'accept']);
-            Route::post('/requests/{request}/reject', [DriverRequestController::class, 'reject']);
-
-            // Existing job lifecycle (keep yours)
+            Route::post('/requests/{jobRequest}/accept', [DriverRequestController::class, 'accept']);
+            Route::post('/requests/{jobRequest}/reject', [DriverRequestController::class, 'reject']);
             Route::post('/jobs/{job}/start', [JobController::class, 'startJob']);
             // Route::post('/jobs/{job}/complete', [JobController::class, 'completeJob']);
-
-
-            // Job Actions
-            Route::post('/jobs/{job}/start', [JobController::class, 'startJob']);
-            Route::post('/jobs/{job}/accept', [JobController::class, 'acceptJob']);
             Route::post('/jobs/{id}/reject', [DriverController::class, 'rejectJob']);
             Route::post('/jobs/{job}/complete', [JobController::class, 'completeJob']);
             Route::post('/jobs/{id}/cancel', [DriverController::class, 'cancelJob']);
-        });
+            Route::delete('/account/delete', [DriverController::class, 'deleteAccount']);
+            Route::delete('/bankaccount/delete', [DriverController::class, 'deleteBankAccount']);
 
+        });
+        Route::post('/jobs/{job}/create-payment-intent', [PaymentController::class, 'createPaymentIntent']);
+        Route::get('/payment-intent/{paymentIntentId}/status', [PaymentController::class, 'checkPaymentStatus']);
+        Route::post('/payment-intent/{paymentIntentId}/cancel', [PaymentController::class, 'cancelPayment']);
+        Route::prefix('admin')->group(function () {
+        Route::get('/pending-bank-details', [AdminController::class, 'getPendingBankDetails']);
+        Route::get('/bank-details', [AdminController::class, 'getAllBankDetails']);
+        Route::post('/bank-details/{id}/approve', [AdminController::class, 'approveBankDetails']);
+
+        
+        // Withdrawal Management
+        Route::get('/pending-withdrawals', [AdminController::class, 'getPendingWithdrawals']);
+        Route::get('/withdrawals', [AdminController::class, 'getAllWithdrawals']);
+        Route::post('/withdrawals/{id}/approve', [AdminController::class, 'approveWithdrawal']);
+        Route::get('/withdrawal-stats', [AdminController::class, 'getWithdrawalStats']);
+    });
 
         Route::prefix('customer')->group(function () {
             Route::get('/dashboard', [CustomerController::class, 'dashboard']);
@@ -92,6 +112,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/drivers/nearby', [CustomerController::class, 'nearbyDrivers']);
             Route::get('/bookings/{job}/track', [CustomerController::class, 'trackDriver']);
             Route::get('/bookings/{job}/receipt', [CustomerController::class, 'receipt']);
+            Route::get('/transactions', [DriverController::class, 'transactions']);
+
 
             // Bookings (JobController)
             Route::post('/bookings', [JobController::class, 'create']);
@@ -103,6 +125,11 @@ Route::prefix('v1')->group(function () {
             Route::post('/bookings/{job}/confirm', [JobController::class, 'confirmBooking']);
             Route::post('/bookings/{job}/cancel', [JobController::class, 'cancel']);
             Route::post('/bookings/{job}/rate', [JobController::class, 'rate']);
+            Route::get('/addresses', [SavedAddressController::class, 'index']);
+            Route::post('/addresses', [SavedAddressController::class, 'store']);
+            Route::put('/addresses/{id}', [SavedAddressController::class, 'update']);
+            Route::delete('/addresses/{id}', [SavedAddressController::class, 'destroy']);
+            Route::get('/history', [CustomerController::class, 'customerHistory']);
 
         });
         // Notifications Routes

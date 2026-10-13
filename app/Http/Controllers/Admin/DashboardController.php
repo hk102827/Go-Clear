@@ -150,4 +150,6 @@ class DashboardController extends Controller
 
         return back()->with('success', "Promotion sent to {$customers->count()} customers successfully");
     }
+
+    
 }

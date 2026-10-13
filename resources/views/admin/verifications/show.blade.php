@@ -44,7 +44,7 @@
                 <div>
                     <p class="text-xs uppercase text-gray-500 font-semibold mb-2">License Front</p>
                     <div class="relative h-48 overflow-hidden rounded border bg-gray-50">
-                        <img src="{{ asset('storage/driver_documents/' . $driverProfile->driving_license_front) }}"
+                        <img src="{{ asset('storage/' . $driverProfile->driving_license_front) }}"
                              class="w-full h-full object-contain cursor-pointer hover:opacity-90 transition"
                              onclick="openImageModal(this.src)">
                     </div>
@@ -54,7 +54,7 @@
                 <div>
                     <p class="text-xs uppercase text-gray-500 font-semibold mb-2">License Back</p>
                     <div class="relative h-48 overflow-hidden rounded border bg-gray-50">
-                        <img src="{{ asset('storage/driver_documents/' . $driverProfile->driving_license_back) }}"
+                        <img src="{{ asset('storage/' . $driverProfile->driving_license_back) }}"
                              class="w-full h-full object-contain cursor-pointer hover:opacity-90 transition"
                              onclick="openImageModal(this.src)">
                     </div>
@@ -64,7 +64,7 @@
                 <div>
                     <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Vehicle Photo</p>
                     <div class="relative h-48 overflow-hidden rounded border bg-gray-50">
-                        <img src="{{ asset('storage/driver_documents/' . $driverProfile->vehicle_photo) }}"
+                        <img src="{{ asset('storage/' . $driverProfile->vehicle_photo) }}"
                              class="w-full h-full object-contain cursor-pointer hover:opacity-90 transition"
                              onclick="openImageModal(this.src)">
                     </div>
@@ -74,7 +74,7 @@
                 <div>
                     <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Insurance Proof</p>
                     <div class="relative h-48 overflow-hidden rounded border bg-gray-50">
-                        <img src="{{ asset('storage/driver_documents/' . $driverProfile->insurance_proof) }}"
+                        <img src="{{ asset('storage/' . $driverProfile->insurance_proof) }}"
                              class="w-full h-full object-contain cursor-pointer hover:opacity-90 transition"
                              onclick="openImageModal(this.src)">
                     </div>
@@ -84,7 +84,7 @@
                 <div>
                     <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Waste Carrier License</p>
                     <div class="relative h-48 overflow-hidden rounded border bg-gray-50">
-                        <img src="{{ asset('storage/driver_documents/' . $driverProfile->waste_carrier_license) }}"
+                        <img src="{{ asset('storage/' . $driverProfile->waste_carrier_license) }}"
                              class="w-full h-full object-contain cursor-pointer hover:opacity-90 transition"
                              onclick="openImageModal(this.src)">
                     </div>

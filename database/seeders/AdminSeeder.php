@@ -14,7 +14,7 @@ class AdminSeeder extends Seeder
             'name' => 'Admin User',
             'email' => 'admin@goclear.com',
             'phone' => '+923001234567',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('admin@123'),
             'role' => 'admin',
             'status' => 'active',
             'email_verified_at' => now(),

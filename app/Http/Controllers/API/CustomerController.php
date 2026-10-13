@@ -21,10 +21,11 @@ class CustomerController extends Controller
         $user = $request->user();
 
         $stats = [
-            'total_jobs' => $user->customerJobs()->count(),
-            'pending_jobs' => $user->customerJobs()->where('status', 'pending')->count(),
-            'active_jobs' => $user->customerJobs()->whereIn('status', ['accepted', 'in_progress'])->count(),
+            'total_jobs'     => $user->customerJobs()->count(),
+            'pending_jobs'   => $user->customerJobs()->where('status', 'pending')->count(),
+            'active_jobs'    => $user->customerJobs()->whereIn('status', ['accepted', 'in_progress'])->count(),
             'completed_jobs' => $user->customerJobs()->where('status', 'completed')->count(),
+            'rejected_jobs'  => $user->customerJobs()->where('status', 'rejected')->count(),   // ← NEW LINE
         ];
 
         $active_jobs = $user->customerJobs()
@@ -252,15 +253,51 @@ public function nearbyDrivers(Request $request)
 
 public function trackDriver(Job $job)
 {
+    if ($job->customer_id !== auth()->id()) {
+        return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+    }
+
+    // driver not assigned yet
+    if (!$job->driver) {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'status' => $job->status,
+                'driver_assigned' => false,
+                'lat' => null,
+                'lng' => null,
+                'updated_at' => null,
+            ]
+        ]);
+    }
+
+    $profile = $job->driver->driverProfile;
+
+    if (!$profile) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Driver profile not found'
+        ], 404);
+    }
+
+    $loc = \App\Models\DriverLocation::where('driver_profile_id', $profile->id)
+        ->latest('recorded_at')
+        ->first();
+
     return response()->json([
-        'success'=>true,
-        'data'=>[
-            'lat'=>$job->driver->driverProfile->current_latitude,
-            'lng'=>$job->driver->driverProfile->current_longitude,
-            'updated_at'=>$job->driver->driverProfile->last_location_update
+        'success' => true,
+        'data' => [
+            'status' => $job->status,
+            'driver_assigned' => true,
+            'lat' => $loc?->lat ?? $profile->current_latitude,
+            'lng' => $loc?->lng ?? $profile->current_longitude,
+            'updated_at' => $loc?->recorded_at ?? $profile->last_location_update,
         ]
     ]);
 }
+
+
+
 
 public function receipt(Job $job)
 {
@@ -269,5 +306,58 @@ public function receipt(Job $job)
         'transaction'=>$job->transaction
     ]);
 }
+
+
+public function customerHistory(Request $request)
+{
+    $customerId = auth()->id();
+
+    $query = Job::where('customer_id', $customerId)
+        ->with(['transaction', 'driver','service'])
+        ->latest();
+
+    if ($request->status === 'completed') {
+        $query->where('status', 'completed');
+    }
+
+    if ($request->status === 'cancelled') {
+        $query->where('status', 'cancelled');
+    }
+
+    $jobs = $query->get()->map(function ($job) {
+        return [
+            'id' => $job->id,
+            'service_type' => $job->service->name,
+            'date_time' => $job->completed_at
+                ? $job->completed_at->format('d M Y - h:i A')
+                : $job->created_at->format('d M Y - h:i A'),
+
+            'status' => ucfirst($job->status),
+
+            'provider_name' => $job->driver->name ?? null,
+
+            'price' => (float) (
+                $job->final_price
+                ?? $job->estimated_price
+                ?? 0
+            ),
+
+            'payment_status' => optional($job->transaction)->status === 'completed'
+                ? 'Paid'
+                : 'Unpaid',
+
+                'actions' => [
+                    'can_rebook' => in_array($job->status, ['completed', 'cancelled', 'rejected']),  // ← added 'rejected'
+                    'can_download_receipt' => $job->status === 'completed'
+                ]
+        ];
+    });
+
+    return response()->json([
+        'success' => true,
+        'data' => $jobs
+    ]);
+}
+
 
 }

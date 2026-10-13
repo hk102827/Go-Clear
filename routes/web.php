@@ -15,6 +15,8 @@ use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\Admin\BankDetailController;
+use App\Http\Controllers\Admin\WithdrawalController;
 
 
 
@@ -78,6 +80,19 @@ Route::prefix('admin')->name('admin.')->middleware([\App\Http\Middleware\AdminMi
     Route::prefix('transactions')->name('transactions.')->group(function () {
         Route::get('/', [TransactionController::class, 'index'])->name('index');
         Route::get('/{transaction}', [TransactionController::class, 'show'])->name('show');
+    });
+
+        Route::prefix('bank-details')->name('bank-details.')->group(function () {
+        Route::get('/', [BankDetailController::class, 'index'])->name('index');
+        Route::get('/{id}', [BankDetailController::class, 'show'])->name('show');
+        Route::post('/{id}/approve', [BankDetailController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject', [BankDetailController::class, 'reject'])->name('reject');
+    });
+        Route::prefix('withdrawals')->name('withdrawals.')->group(function () {
+        Route::get('/', [WithdrawalController::class, 'index'])->name('index');
+        Route::get('/{id}', [WithdrawalController::class, 'show'])->name('show');
+        Route::post('/{id}/approve', [WithdrawalController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject', [WithdrawalController::class, 'reject'])->name('reject');
     });
 
     // 🔔 NOTIFICATION ROUTES - ADD THIS SECTION

@@ -12,6 +12,10 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use App\Services\NotificationService;
 use App\Models\JobRequest;
+use Illuminate\Support\Facades\DB;
+use App\Services\StripeService;
+
+
 
 
 
@@ -22,7 +26,7 @@ class JobController extends Controller
         $validated = $request->validate([
             'service_id' => 'required|exists:services,id',
             'pickup_address' => 'required|string',
-            'pickup_postcode' => 'required|string',
+            'pickup_postcode' => 'nullable|string',
             'pickup_latitude' => 'nullable|numeric',
             'pickup_longitude' => 'nullable|numeric',
             'delivery_address' => 'nullable|string',
@@ -141,119 +145,155 @@ class JobController extends Controller
         ]);
     }
 
-        public function startJob(Job $job)
-        {
-       
+public function startJob(Job $job)
+{
+    if ($job->driver_id !== auth()->id()) {
+        return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+    }
 
-            if ($job->driver_id !== auth()->id()) {
-                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-            }
+    if ($job->status !== 'accepted') {
+        return response()->json(['success' => false, 'message' => 'Job not accepted'], 400);
+    }
 
-            if ($job->status !== 'accepted') {
-                return response()->json(['success' => false, 'message' => 'Job not accepted'], 400);
-            }
+    $driver = auth()->user();
 
-            $job->update([
-                'status' => 'in_progress'
-            ]);
-                    // 🔔 Notify customer that job has started
-            NotificationService::jobStarted(
-                $job->customer,
-                $job->id,
-                auth()->user()->name
-            );
+    $job->update([
+        'status' => 'in_progress',
+        'started_at' => now()
+    ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Job started',
-                'data' => $job
-            ]);
-        }
+    // 🔔 SEND NOTIFICATION TO CUSTOMER - Job Started
+    \App\Models\Notification::create([
+        'user_id' => $job->customer_id,
+        'type' => 'JOB_STARTED',
+        'title' => 'Driver is On The Way',
+        'message' => 'Your driver ' . $driver->name . ' has started heading to your location.',
+        'data' => json_encode([
+            'job_id' => $job->id,
+            'driver_name' => $driver->name,
+            'driver_phone' => $driver->phone ?? 'N/A',
+            'vehicle_number' => $driver->driverProfile->vehicle_number ?? 'N/A',
+            'started_at' => now()->toDateTimeString()
+        ]),
+        'is_read' => false
+    ]);
 
+    // 🔔 SEND NOTIFICATION TO DRIVER - Job Started Confirmation
+    \App\Models\Notification::create([
+        'user_id' => $driver->id,
+        'type' => 'JOB_STARTED_DRIVER',
+        'title' => 'Job Started',
+        'message' => 'You have started the job. Navigate to the customer location.',
+        'data' => json_encode([
+            'job_id' => $job->id,
+            'customer_name' => $job->customer->name ?? 'Customer',
+            'pickup_address' => $job->pickup_address,
+            'started_at' => now()->toDateTimeString()
+        ]),
+        'is_read' => false
+    ]);
 
-    public function completeJob(Request $request, Job $job)
-    {
-        if ($job->driver_id !== auth()->id()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized'
-            ], 403);
-        }
+    return response()->json([
+        'success' => true,
+        'message' => 'Job started',
+        'data' => $job->fresh()
+    ]);
+}
 
-        if ($job->status !== 'in_progress') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Job is not in progress'
-            ], 400);
-        }
+public function completeJob(Request $request, Job $job)
+{
+    if ($job->driver_id !== auth()->id()) {
+        return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+    }
 
-        $validated = $request->validate([
-            'final_price' => 'required|numeric|min:0',
-            'distance' => 'nullable|numeric',
-            'duration' => 'nullable|integer',
-        ]);
+    if ($job->status !== 'in_progress') {
+        return response()->json(['success' => false, 'message' => 'Job is not in progress'], 400);
+    }
+
+    $validated = $request->validate([
+        'final_price' => 'required|numeric|min:0',
+        'distance'    => 'nullable|numeric',
+        'duration'    => 'nullable|integer',
+    ]);
+
+    $commissionRate = (float) (\App\Models\Setting::where('key', 'admin_commission')->value('value') ?? 15);
+    $adminCommission = round(($validated['final_price'] * $commissionRate) / 100, 2);
+    $driverEarning = max(round($validated['final_price'] - $adminCommission, 2), 0);
+    $txId = 'TXN-' . now()->timestamp . '-' . rand(1000, 9999);
+
+    $driver = auth()->user();
+
+    $transaction = DB::transaction(function () use ($job, $validated, $adminCommission, $driverEarning, $txId, $driver) {
 
         $job->update([
-            'status' => 'completed',
+            'status'      => 'completed',
             'final_price' => $validated['final_price'],
-            'distance' => $validated['distance'] ?? null,
-            'duration' => $validated['duration'] ?? null,
+            'distance'    => $validated['distance'],
+            'duration'    => $validated['duration'],
+            'completed_at' => now()
         ]);
 
-        // Calculate commission
-        $commission_rate = Setting::where('key', 'admin_commission')->value('value') ?? 15;
-$commission_rate = (float) $commission_rate; // ensure it's numeric
-
-        $admin_commission = ($validated['final_price'] * $commission_rate) / 100;
-        $driver_earning = $validated['final_price'] - $admin_commission;
-
-        // Create transaction
+        // ✅ Create transaction with 'pending' status (waiting for customer payment)
         $transaction = Transaction::create([
-            'transaction_id' => 'TXN-' . now()->timestamp . '-' . rand(1000, 9999),
-            'job_id' => $job->id,
-            'customer_id' => $job->customer_id,
-            'driver_id' => $job->driver_id,
-            'amount' => $validated['final_price'],
-            'admin_commission' => $admin_commission,
-            'driver_earning' => $driver_earning,
-            'payment_method' => 'card',
-            'status' => 'completed',
+            'transaction_id'   => $txId,
+            'job_id'           => $job->id,
+            'customer_id'      => $job->customer_id,
+            'driver_id'        => $job->driver_id,
+            'amount'           => $validated['final_price'],
+            'admin_commission' => $adminCommission,
+            'driver_earning'   => $driverEarning,
+            'payment_method'   => 'card',
+            'gateway_ref'      => null, // Will be updated after payment
+            'status'           => 'pending', // ✅ Waiting for payment
         ]);
 
+        optional($job->driver?->driverProfile)->increment('total_jobs');
 
-        // Update driver earnings
-        $earnings = DriverEarning::firstOrCreate(
-            ['driver_id' => $job->driver_id],
-            ['total_earnings' => 0, 'available_balance' => 0, 'withdrawn_amount' => 0]
-        );
-
-        $earnings->increment('total_earnings', $driver_earning);
-        $earnings->increment('available_balance', $driver_earning);
-
-        // Update driver stats
-        $job->driver->driverProfile->increment('total_jobs');
-         // 🔔 Notify customer about job completion
-        NotificationService::jobCompleted(
-            $job->customer,
-            $job->id
-        );
-
-        // 🔔 Notify customer about payment
-        NotificationService::paymentReceived(
-            $job->customer,
-            $job->id,
-            $validated['final_price']
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Job completed successfully',
-            'data' => [
-                'job' => $job,
-                'transaction' => $transaction
-            ]
+        // 🔔 SEND NOTIFICATION TO CUSTOMER - Job Completed, Payment Required
+        \App\Models\Notification::create([
+            'user_id' => $job->customer_id,
+            'type' => 'JOB_COMPLETED',
+            'title' => 'Job Completed - Payment Required',
+            'message' => 'Your job has been completed by ' . $driver->name . '. Please proceed to payment.',
+            'data' => json_encode([
+                'job_id' => $job->id,
+                'transaction_id' => $txId,
+                'final_price' => $validated['final_price'],
+                'driver_name' => $driver->name,
+                'completed_at' => now()->toDateTimeString()
+            ]),
+            'is_read' => false
         ]);
-    }
+
+        // 🔔 SEND NOTIFICATION TO DRIVER - Job Completed, Awaiting Payment
+        \App\Models\Notification::create([
+            'user_id' => $driver->id,
+            'type' => 'JOB_COMPLETED_DRIVER',
+            'title' => 'Job Completed',
+            'message' => 'You have completed the job. Waiting for customer payment confirmation.',
+            'data' => json_encode([
+                'job_id' => $job->id,
+                'transaction_id' => $txId,
+                'final_price' => $validated['final_price'],
+                'your_earning' => $driverEarning,
+                'completed_at' => now()->toDateTimeString()
+            ]),
+            'is_read' => false
+        ]);
+
+        return $transaction;
+    });
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Job completed. Waiting for customer payment.',
+        'data' => [
+            'job'         => $job->fresh(),
+            'transaction' => $transaction
+        ]
+    ]);
+}
+
 
     public function cancel(Request $request, Job $job)
     {
@@ -384,11 +424,23 @@ $commission_rate = (float) $commission_rate; // ensure it's numeric
             return response()->json(['success' => false, 'message' => 'Job cannot be confirmed'], 400);
         }
 
-        // Expect driver_ids from frontend (selected nearby)
         $validated = $request->validate([
-            'driver_ids' => 'required|array|min:1',
-            'driver_ids.*' => 'integer|exists:users,id'
+        'driver_ids' => 'required|array|min:1',
+        'driver_ids.*' => 'integer|exists:users,id',
+
+        'route_miles' => 'nullable|numeric|min:0',
+        'duration_seconds' => 'nullable|integer|min:0',
+        'estimated_price' => 'nullable|numeric|min:0',
         ]);
+
+        $job->update([
+        'distance' => $validated['route_miles'] ?? $job->distance,
+        'duration' => isset($validated['duration_seconds'])
+            ? (int) ceil($validated['duration_seconds'] / 60)
+            : $job->duration,
+        'estimated_price' => $validated['estimated_price'] ?? $job->estimated_price,
+        ]);
+
 
         // Prevent duplicate requests
         $already = JobRequest::where('job_id', $job->id)->whereIn('driver_id', $validated['driver_ids'])->count();

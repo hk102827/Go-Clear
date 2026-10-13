@@ -1,6 +1,7 @@
 /* Change sidebar background colors */
 aside#sidebar {
     background-color: #3D95A0 !important;
+    width: 18%;
 }
 
 /* Change border colors */

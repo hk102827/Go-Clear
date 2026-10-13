@@ -53,6 +53,24 @@
             opacity: 1;
             pointer-events: auto;
         }
+        /* Custom Scrollbar for Sidebar */
+#sidebar nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+#sidebar nav::-webkit-scrollbar-track {
+    background: #1f2937; /* gray-800 */
+}
+
+#sidebar nav::-webkit-scrollbar-thumb {
+    background: #4b5563; /* gray-600 */
+    border-radius: 3px;
+}
+
+#sidebar nav::-webkit-scrollbar-thumb:hover {
+    background: #6b7280; /* gray-500 */
+}
+        
     </style>
 </head>
 
@@ -200,7 +218,7 @@
 
             <!-- Main Content -->
             <main class="flex-1 overflow-y-auto bg-gray-50">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+                <div class="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
                     @yield('content')
                 </div>
             </main>

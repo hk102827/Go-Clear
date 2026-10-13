@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
+
 class User extends Authenticatable
 {
      use HasApiTokens, Notifiable;
@@ -21,7 +22,7 @@ class User extends Authenticatable
     // Relations
     public function driverProfile()
     {
-        return $this->hasOne(DriverProfile::class, 'user_id');
+        return $this->hasOne(\App\Models\DriverProfile::class, 'user_id');
     }
 
     public function driverServices()

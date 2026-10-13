@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Setting;
+use Illuminate\Support\Facades\View;
+use App\Models\DriverBankDetail;
+use App\Models\Withdrawal;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,6 +44,12 @@ public function boot()
         // Share with all views as $appName
         view()->share('appName', $settings['app_name'] ?? config('app.name'));
     }
+        View::composer('layouts.app', function ($view) {
+        $view->with([
+            'pendingBankDetailsCount' => DriverBankDetail::whereNull('is_approved')->count(),
+            'pendingWithdrawalsCount' => Withdrawal::where('status', 'pending')->count()
+        ]);
+    });
 }
 
 }

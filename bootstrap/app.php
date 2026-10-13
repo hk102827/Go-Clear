@@ -12,7 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+
+        $middleware->alias([
+            'driver' => \App\Http\Middleware\EnsureDriver::class,
+            'customer' => \App\Http\Middleware\EnsureCustomer::class,
+        ]);
+
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
